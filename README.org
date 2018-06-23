@@ -1,4 +1,4 @@
-#+TITLE: AFP
+#+TITLE: Base de datos de los valores cuota históricos de las AFP.
 #+AUTHOR: Marcelo Muñoz
 #+EMAIL:               ma.munoz.araya@gmail.com
 #+STARTUP:             hideblocks
@@ -105,7 +105,6 @@ final:
   df = df.T.stack(level=[0,1]).reset_index()
   df['date'] = (df.iloc[:,0] + "-" + df.iloc[:,1] + "-" + df.iloc[:,2]).astype(np.datetime64)
   df = df.set_index('date').iloc[:, -1]
-  df.columns = ['UF']
 
   df.to_csv(f'data/uf-19900101-20180709.csv')
 #+end_src
