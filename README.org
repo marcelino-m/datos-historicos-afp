@@ -13,23 +13,19 @@
 #+PROPERTY: header-args:python  :session *Python*
 #+PROPERTY: header-args:python+ :var imgdir = "img-auto/"
 
+* Introducción
+Aquí podrás encontrar las siguientes BD en formato CSV:
 
-* Valores cuota históricos
+- Valores históricos de los "Valores Cuota" de los fondos de inversión, desde el año 2002.
+- Valores históricos de la UF (unidad de fomento)  desde el año 1990.
+
+* Construcción de las base de datos  
+** Valores cuota históricos
 La  base  de  datos  con  los  "valores  cuota"  históricos  para  los
-diferentes fondos de  las **AFP** se puede obtener desde  la pagina de
-la superintendencia de pensiones[fn::http://www.spensiones.cl/apps/valoresCuotaFondo/vcfAFP.php].
- 
+diferentes fondos de  las AFP se puede obtener desde  la pagina de
+la superintendencia de pensiones.
 
-Lamentablemente y como es comun no  hay mucho esfurezo en entregar los
-datos en el mejor formato. El  archivos que se puede descargar a pesar
-que tien extencion **.csv** en realidad  no lo es, internamente es mas
-bien una colección de CSV's , que  no son coherentes entre si y con un
-montón de texto basura.
-
-El primer paso es por tanto limpiar este archivo para luego generar un
-CSV de buena calidad.
-
-El siguiente código limpia y genera una lista de CSV's: 
+El siguiente código limpia y genera una lista de CSV's temporales: 
 
 #+name: get-valores-cuota
 #+begin_src bash :results silent :exports code  :var FONDO="" 
@@ -54,7 +50,7 @@ El siguiente código limpia y genera una lista de CSV's:
       csplit -z -s --prefix="tmp/$FONDO-" --suppress-matched  - '/Valores/' '{*}'
 #+end_src
 
-Y con  la ayuda de  la súper truper  librería **pandas** generamos  el CSV
+Y con  la ayuda de  la súper truper  librería pandas generamos  el CSV
 final:
 
 #+name: to-csv
@@ -83,9 +79,7 @@ final:
 #+call: get-valores-cuota(FONDO="E")
 #+call: to-csv(FONDO="E")
 
-* UF 
-Deseable también para cualquier análisis son los valores históricos de
-la **UF**, y para variar no esta en un formato de fácil manipulación.
+** UF (Unidad de Fomento) 
 
 #+begin_src python
   import pandas as pd
