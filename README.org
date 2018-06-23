@@ -1,0 +1,121 @@
+#+TITLE: AFP
+#+AUTHOR: Marcelo Muñoz
+#+EMAIL:               ma.munoz.araya@gmail.com
+#+STARTUP:             hideblocks
+#+OPTIONS:             email:nil arch:nil
+#+LANGUAGE:            es
+#+LaTeX_CLASS:         article
+#+LaTeX_CLASS_OPTIONS: [colorlinks=true,urlcolor=blue,secnums]
+#+LATEX_HEADER:        \usepackage[margin=2cm]{geometry}
+#+LATEX_HEADER:        \usepackage[spanish]{babel}
+#+LATEX_HEADER:        \hypersetup{ colorlinks = true, linkcolor=[rgb]{0.57,0.05, 0.03}}
+#+PROPERTY: header-args  :eval never-export 
+#+PROPERTY: header-args:python  :session *Python*
+#+PROPERTY: header-args:python+ :var imgdir = "img-auto/"
+
+
+* Valores cuota históricos
+La  base  de  datos  con  los  "valores  cuota"  históricos  para  los
+diferentes fondos de  las **AFP** se puede obtener desde  la pagina de
+la superintendencia de pensiones[fn::http://www.spensiones.cl/apps/valoresCuotaFondo/vcfAFP.php].
+ 
+
+Lamentablemente y como es comun no  hay mucho esfurezo en entregar los
+datos en el mejor formato. El  archivos que se puede descargar a pesar
+que tien extencion **.csv** en realidad  no lo es, internamente es mas
+bien una colección de CSV's , que  no son coherentes entre si y con un
+montón de texto basura.
+
+El primer paso es por tanto limpiar este archivo para luego generar un
+CSV de buena calidad.
+
+El siguiente código limpia y genera una lista de CSV's: 
+
+#+name: get-valores-cuota
+#+begin_src bash :results silent :exports code  :var FONDO="" 
+  #!/bin/bash
+
+  URL="https://www.spensiones.cl/apps/valoresCuotaFondo/vcfAFPxls.php"`
+     `"?aaaaini=2000&aaaafin=2018&tf=${FONDO:=A}&fecconf=20180531"
+
+  if [ -d tmp ]; then
+    rm tmp/*
+  else
+    mkdir tmp/
+  fi
+
+  curl -s -L "$URL"                                   |
+      sed -E 's/Fecha;/Fecha;;/g'                     |
+      sed -E 's/SUMMA BANSANDER/BANSANDER/g'          |
+      sed -E 's/SANTA MARIA/SANTAMARIA/g'             |
+      sed -E 's/;;(\w+( \w+)*)/;\1 vcuota;\1 patr/g'  |
+      sed -E '/;Valor Cuota;/d'                       |
+      sed '/^\s*$/d'                                  |
+      csplit -z -s --prefix="tmp/$FONDO-" --suppress-matched  - '/Valores/' '{*}'
+#+end_src
+
+Y con  la ayuda de  la súper truper  librería **pandas** generamos  el CSV
+final:
+
+#+name: to-csv
+#+begin_src python  :results silent :exports code :var FONDO=""
+  import pandas as pd
+  import glob   as g
+  import os
+  df = pd.DataFrame()
+
+  for file in g.glob('tmp/*'):
+      tmp = pd.read_csv( file, sep=';', index_col='Fecha', parse_dates=True, thousands=".", decimal=",")
+      df = df.append(tmp, sort=True)
+
+  df = df.sort_index()
+  df.to_csv(f'data/fondo-{FONDO}.csv')
+#+end_src
+
+#+call: get-valores-cuota(FONDO="A")
+#+call: to-csv(FONDO="A")
+#+call: get-valores-cuota(FONDO="B")
+#+call: to-csv(FONDO="B")
+#+call: get-valores-cuota(FONDO="C")
+#+call: to-csv(FONDO="C")
+#+call: get-valores-cuota(FONDO="D")
+#+call: to-csv(FONDO="D")
+#+call: get-valores-cuota(FONDO="E")
+#+call: to-csv(FONDO="E")
+
+* UF 
+Deseable también para cualquier análisis son los valores históricos de
+la **UF**, y para variar no esta en un formato de fácil manipulación.
+
+#+begin_src python
+  import pandas as pd
+  import numpy  as np
+  import matplotlib.pyplot as plt
+
+  df = pd.DataFrame()
+
+  for year in range(1990, 2019):
+      if year < 2013:
+          url = f"http://www.sii.cl/pagina/valores/uf/uf{year}.htm"
+          attrs={"class": "tabla"}
+      else:
+          url = f"http://www.sii.cl/valores_y_fechas/uf/uf{year}.htm"
+          attrs={"id" :"table_export"}
+
+      tmp = pd.read_html(url, attrs=attrs, flavor='html5lib', decimal=",", thousands=".", index_col=0)[0]
+      tmp.columns = ["%02d" % i for i in range(1, 13)]
+      tmp.index = ["%02d" % i for i in range(1,32)]
+      tmp = tmp.T.stack()
+      df[str(year)] = tmp
+
+  df = df.T.stack(level=[0,1]).reset_index()
+  df['date'] = (df.iloc[:,0] + "-" + df.iloc[:,1] + "-" + df.iloc[:,2]).astype(np.datetime64)
+  df = df.set_index('date').iloc[:, -1]
+  df.columns = ['UF']
+
+  df.to_csv(f'data/uf-19900101-20180709.csv')
+#+end_src
+
+
+
+
