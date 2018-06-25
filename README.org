@@ -40,8 +40,7 @@ Y un archivo con todo los datos:
   'img/plot.png'
 #+end_src
 
-#+RESULTS:
-[[file:img/plot.png]]
+[[img/plot.png]]
 
 * Por que existe este repo?
 Los datos aquí  están en un formato  adecuado para hacer lo  que se te
