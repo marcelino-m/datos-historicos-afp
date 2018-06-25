@@ -29,6 +29,8 @@ Y un archivo con todo los datos:
 
 - [[data/fondo-all.csv]]
 
+** Leyendo los datos, un ejemplo:
+
 #+begin_src python  :exports code :results file
   import pandas as pd
   import matplotlib.pyplot as plt
@@ -39,7 +41,6 @@ Y un archivo con todo los datos:
   plt.savefig('img/plot.png')
   'img/plot.png'
 #+end_src
-
 [[img/plot.png]]
 
 * Por que existe este repo?
