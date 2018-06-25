@@ -13,7 +13,7 @@
 #+PROPERTY: header-args:python  :session *Python*
 
 
-* Introducción  
+  
 En este repositorio  podras encontrar los valores  cuota históricos de
 los fondos de pensiones y el valor de la UF desde el año 2000.
 
@@ -29,8 +29,7 @@ Y un archivo con todo los datos:
 
 - [[data/fondo-all.csv]]
 
-** Leyendo los datos, un ejemplo:
-
+** Ejemplo de lectura (con pandas)
 #+begin_src python  :exports code :results file
   import pandas as pd
   import matplotlib.pyplot as plt
