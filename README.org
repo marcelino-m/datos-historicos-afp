@@ -27,7 +27,7 @@ Los archivos disponibles son:
 
 Y un archivo con todo los datos:
 
--[[ data/fondo-all.csv]]
+- [[data/fondo-all.csv]]
 
 #+begin_src python  :exports code :results file
   import pandas as pd
