@@ -1,4 +1,4 @@
-#+TITLE: Base de datos de los valores cuota históricos de las AFP.
+#+TITLE: Valores cuota históricos de las AFP.
 #+AUTHOR: Marcelo Muñoz
 #+EMAIL:               ma.munoz.araya@gmail.com
 #+STARTUP:             hideblocks
@@ -11,16 +11,54 @@
 #+LATEX_HEADER:        \hypersetup{ colorlinks = true, linkcolor=[rgb]{0.57,0.05, 0.03}}
 #+PROPERTY: header-args  :eval never-export 
 #+PROPERTY: header-args:python  :session *Python*
-#+PROPERTY: header-args:python+ :var imgdir = "img-auto/"
 
-* Introducción
-Aquí podrás encontrar las siguientes BD en formato CSV:
 
-- Valores históricos de los "Valores Cuota" de los fondos de inversión, desde el año 2002.
-- Valores históricos de la UF (unidad de fomento)  desde el año 1990.
+* Introducción  
+En este repositorio  podras encontrar los valores  cuota históricos de
+los fondos de pensiones y el valor de la UF desde el año 2000.
+
+Los archivos disponibles son:
+
+- [[data/fondo-A.csv]]
+- [[data/fondo-B.csv]]
+- [[data/fondo-C.csv]]
+- [[data/fondo-D.csv]]
+- [[data/fondo-E.csv]]  
+
+Y un archivo con todo los datos:
+
+-[[ data/fondo-all.csv]]
+
+#+begin_src python  :exports code :results file
+  import pandas as pd
+  import matplotlib.pyplot as plt
+
+  df = pd.read_csv('./data/fondo-all.csv', header = [0,1], index_col = 0, parse_dates=True)
+
+  df['habitat'].plot(title="Valores cuota AFP habitat")
+  plt.savefig('img/plot.png')
+  'img/plot.png'
+#+end_src
+
+#+RESULTS:
+[[file:img/plot.png]]
+
+* Por que existe este repo?
+Los datos aquí  están en un formato  adecuado para hacer lo  que se te
+ocurra  e importarlos  a cualquier  herramienta que  lea formato  CSV.
+
+Lamentablemente y como es tradición el  formato de origen de los datos
+deja bastante que  desear, sin embargo se valora el  hecho en que esta
+información  este disponible  para  su  descarga en  la  pagina de  la
+superintendencia de pensiones.
+
+Manos a  la obra!, con un  poco de ingenio podemos  obtener, limpiar y
+formatear los  datos originales, en  las siguientes secciones  esta el
+detalle de como lo realice.
 
 * Construcción de las base de datos  
 ** Valores cuota históricos
+
 La  base  de  datos  con  los  "valores  cuota"  históricos  para  los
 diferentes fondos de  las AFP se puede obtener desde  la pagina de
 la superintendencia de pensiones.
@@ -50,8 +88,8 @@ El siguiente código limpia y genera una lista de CSV's temporales:
       csplit -z -s --prefix="tmp/$FONDO-" --suppress-matched  - '/Valores/' '{*}'
 #+end_src
 
-Y con  la ayuda de  la súper truper  librería pandas generamos  el CSV
-final:
+Y con  la ayuda de  la súper truper  librería pandas generamos  un CSV
+para cada fondo (A, B, C, D o E):
 
 #+name: to-csv
 #+begin_src python  :results silent :exports code :var FONDO=""
@@ -65,9 +103,33 @@ final:
       df = df.append(tmp, sort=True)
 
   df = df.sort_index()
+
+  for i in df.columns:
+      if i.split()[1] == "patr":
+          df.drop(i, inplace=True, axis=1)
+
+  columns = [i.split()[0].strip().lower() for i in df.columns]
+  df.columns = columns
+  df.index.name = 'fecha'
+
   df.to_csv(f'data/fondo-{FONDO}.csv')
 #+end_src
 
+Finalmente generamos un CSV con toda esta información:
+
+#+name: merge-csv
+#+begin_src python  :results silent :exports code
+  import pandas as pd
+  import numpy  as np
+
+  fondos = [pd.read_csv(f"./data/fondo-{fondo}.csv", parse_dates=True, index_col=0, header=0) for fondo in ['A', 'B', 'C', 'D', 'E']]
+
+  df =  pd.concat(fondos, axis = 1, keys = ['A', 'B', 'C', 'D', 'E'])
+  df =  df.swaplevel(0, 1, axis=1)
+  df.to_csv("./data/fondo-all.csv")
+#+end_src
+
+ 
 #+call: get-valores-cuota(FONDO="A")
 #+call: to-csv(FONDO="A")
 #+call: get-valores-cuota(FONDO="B")
@@ -78,37 +140,48 @@ final:
 #+call: to-csv(FONDO="D")
 #+call: get-valores-cuota(FONDO="E")
 #+call: to-csv(FONDO="E")
+#+call: merge-csv()
 
 ** UF (Unidad de Fomento) 
 
-#+begin_src python
+Para obtener el valor de la UF, es un poco mas fácil:
+
+#+name: get-uf
+#+begin_src python :exports code :results silent
   import pandas as pd
   import numpy  as np
   import matplotlib.pyplot as plt
 
   df = pd.DataFrame()
 
-  for year in range(1990, 2019):
-      if year < 2013:
-          url = f"http://www.sii.cl/pagina/valores/uf/uf{year}.htm"
-          attrs={"class": "tabla"}
-      else:
-          url = f"http://www.sii.cl/valores_y_fechas/uf/uf{year}.htm"
-          attrs={"id" :"table_export"}
+  # Los datos hasta el 2012 se encuentran en esta URL
+  url = "http://www.sii.cl/pagina/valores/uf/uf%d.htm"
+  attrs={"class": "tabla"}
 
-      tmp = pd.read_html(url, attrs=attrs, flavor='html5lib', decimal=",", thousands=".", index_col=0)[0]
+  for year in range(2000, 2013):
+      tmp = pd.read_html(url % year, attrs=attrs, flavor='html5lib', decimal=",", thousands=".", index_col=0)[0]
       tmp.columns = ["%02d" % i for i in range(1, 13)]
       tmp.index = ["%02d" % i for i in range(1,32)]
       tmp = tmp.T.stack()
       df[str(year)] = tmp
 
+  # Los datos a partir del 2013 cambian de URL y formato.
+  url = f"http://www.sii.cl/valores_y_fechas/uf/uf%d.htm"
+  attrs={"id" :"table_export"}
+
+  for year in range(2013, 2019):
+      tmp = pd.read_html(url % year , attrs=attrs, flavor='html5lib', decimal=",", thousands=".", index_col=0)[0]
+      tmp.columns = ["%02d" % i for i in range(1, 13)]
+      tmp.index = ["%02d" % i for i in range(1,32)]
+      tmp = tmp.T.stack()
+      df[str(year)] = tmp
+
+
   df = df.T.stack(level=[0,1]).reset_index()
-  df['date'] = (df.iloc[:,0] + "-" + df.iloc[:,1] + "-" + df.iloc[:,2]).astype(np.datetime64)
-  df = df.set_index('date').iloc[:, -1]
-
-  df.to_csv(f'data/uf-19900101-20180709.csv')
+  df['fecha'] = (df.iloc[:,0] + "-" + df.iloc[:,1] + "-" + df.iloc[:,2]).astype(np.datetime64)
+  df = df.set_index('fecha').iloc[:, -1]
+  df.to_csv(f'data/uf.csv', header=True)
 #+end_src
-
 
 
 
