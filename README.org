@@ -43,17 +43,14 @@ Y un archivo con todo los datos:
 [[img/plot.png]]
 
 * Por que existe este repo?
-Los datos aquí  están en un formato  adecuado para hacer lo  que se te
-ocurra  e importarlos  a cualquier  herramienta que  lea formato  CSV.
-
-Lamentablemente y como es tradición el  formato de origen de los datos
-deja bastante que  desear, sin embargo se valora el  hecho en que esta
-información  este disponible  para  su  descarga en  la  pagina de  la
+Lamentablemente  y como  es tradición  el formato  de origen  de éstos
+datos deja bastante que desear, sin  embargo se valora el hecho en que
+esta información este  disponible para su descarga en la  pagina de la
 superintendencia de pensiones.
 
-Manos a  la obra!, con un  poco de ingenio podemos  obtener, limpiar y
-formatear los  datos originales, en  las siguientes secciones  esta el
-detalle de como lo realice.
+Los datos  que se presentan  en este  repositorio están en  un formato
+adecuado para  importarlos directamente  en cualquier  herramienta que
+lea archivos CSV.
 
 * Construcción de las base de datos  
 ** Valores cuota históricos
