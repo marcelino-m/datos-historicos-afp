@@ -14,8 +14,8 @@
 
 
   
-En este repositorio  podras encontrar los valores  cuota históricos de
-los fondos de pensiones y el valor de la UF desde el año 2000.
+En este repositorio  podras encontrar los *valores  cuota* históricos de
+los fondos de pensiones y el valor de la *UF* desde el año 2000.
 
 Los archivos disponibles son:
 
